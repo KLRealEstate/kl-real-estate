@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://klrealestate.github.io/kl-real-estate/sitemap.xml
