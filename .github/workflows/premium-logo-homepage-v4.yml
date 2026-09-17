@@ -1,0 +1,22 @@
+name: KL Real Estate Premium Theme
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  theme:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply premium CSS
+        run: python3 -c "from pathlib import Path;import base64;p=Path('index.html');s=p.read_text();m='/* premium-kl-home-v4 */';css=base64.b64decode('REPLACE_ME').decode();p.write_text(s if m in s else s.replace('</style>',css+'\\n</style>',1))"
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet || git commit -m "Apply stable KL premium theme"
+          git push
