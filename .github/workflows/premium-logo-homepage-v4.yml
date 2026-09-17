@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Apply premium CSS
-        run: python3 -c "from pathlib import Path;import base64;p=Path('index.html');s=p.read_text();m='/* premium-kl-home-v4 */';css=base64.b64decode('Lyo=premium-kl-home-v4 */').decode();p.write_text(s if m in s else s.replace('</style>',css+'\\n</style>',1))"
+        run: python3 -c "from pathlib import Path;import base64;p=Path('index.html');s=p.read_text();m='/* premium-kl-home-v4 */';css=base64.b64decode('LyogcHJlbWl1bS1rbC1ob21lLXY0ICovCjpyb290ey0tbmF2eTojMWMzMTUwOy0tbmF2eTI6IzBlMjc0NzstLWdvbGQ6I2MzOWE0YjstLWNyZWFtOiNmYmY4ZjE7LS1zb2Z0Z29sZDpmN2YwZGY7LS1zb2Z0Ymx1ZTojZWVmM2Y4fQ==').decode();p.write_text(s if m in s else s.replace('</style>',css+'\\n</style>',1))"
       - name: Commit changes
         run: |
           git config user.name "github-actions[bot]"
