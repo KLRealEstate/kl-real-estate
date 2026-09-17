@@ -1,0 +1,56 @@
+name: Fix Tamil Language
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore bilingual language toggle
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          marker='/* tamil-toggle-fix */'
+          if marker in s:
+              print('Tamil fix already installed')
+              raise SystemExit(0)
+          patch=r'''<script>/* tamil-toggle-fix */
+          (function(){
+            const TA={
+              home:'முகப்பு',properties:'சொத்துகள்',about:'எங்களைப் பற்றி',services:'சேவைகள்',enquiry:'விசாரணை',tracking:'விசாரணை நிலை',contact:'தொடர்பு',
+              eyebrow:'தமிழ்நாடு சொத்து சேவை',heroTitle1:'சிறந்த இடம்.',heroTitle2:'சிறந்த எதிர்காலம்.',
+              heroText:'வீடுகள், மனைகள், அடுக்குமாடி குடியிருப்புகள், விவசாய நிலங்கள் மற்றும் வணிக சொத்துகளை KL Real Estate மூலம் எளிதாகத் தேடுங்கள்.',
+              viewProperties:'⌂ சொத்துகளைப் பார்க்க',submitEnquiry:'✦ உங்கள் தேவையை தெரிவிக்க',buy:'வாங்க',rent:'வாடகைக்கு',sell:'விற்க',siteVisit:'நேரில் பார்வையிட',callMe:'அழைக்க',
+              lookingFor:'தேவை',propertyType:'சொத்து வகை',location:'இடம்',maxBudget:'அதிகபட்ச பட்ஜெட்',search:'தேடுக',listings:'பட்டியல்',featured:'முக்கிய சொத்துகள்',
+              featuredText:'KL Real Estate நிர்வாகப் பலகையில் சேர்க்கப்பட்ட முக்கிய சொத்துகள் இங்கே காட்டப்படும்.',explore:'பார்க்க',categories:'சொத்து வகைகள்',categoriesText:'உங்கள் தேவைக்கு ஏற்ற சொத்து வகையைத் தேர்வு செய்யுங்கள்.',
+              whyKl:'KL ஏன்',simpleAssistance:'உங்கள் சொத்து. எங்கள் முன்னுரிமை.',propertyEnquiry:'சொத்து விசாரணை',tellUs:'உங்களுக்கு தேவையானதை தெரிவியுங்கள்.',submitRequirement:'உங்கள் தேவையை அனுப்புங்கள். KL Real Estate உங்களைத் தொடர்புகொள்ளும்.',
+              fullName:'முழுப் பெயர்',mobile:'மொபைல் எண்',requirement:'தேவை',district:'விருப்ப மாவட்டம்',preferredLocation:'விருப்ப இடம்',maxBudgetFull:'அதிகபட்ச பட்ஜெட்',requiredArea:'தேவையான பரப்பளவு',additional:'கூடுதல் தேவைகள்',submitPropertyEnquiry:'சொத்து விசாரணையை அனுப்ப',
+              followUp:'தொடர்பு நிலை',trackTitle:'உங்கள் விசாரணையைப் பின்தொடருங்கள்',trackText:'உங்கள் Enquiry ID-ஐ உள்ளிட்டு KL Real Estate-ஐ தொடர்புகொள்ளலாம்.',checkStatus:'நிலையைப் பார்க்க',letsFind:'உங்கள் சொத்தை கண்டுபிடிப்போம்.'
+            };
+            const EN={}; document.querySelectorAll('[data-i18n]').forEach(el=>{const k=el.dataset.i18n;EN[k]=el.textContent});
+            const optionTA={
+              purpose:{all:'எதுவும்',Buy:'வாங்க',Rent:'வாடகைக்கு',Sell:'விற்க'},
+              ptype:{all:'எந்த சொத்தும்','Residential Plot':'குடியிருப்பு மனை',House:'வீடு',Apartment:'அடுக்குமாடி குடியிருப்பு',Villa:'வில்லா','Agricultural Land':'விவசாய நிலம்','Commercial Property':'வணிக சொத்து','Industrial Property':'தொழிற்சாலை சொத்து',Other:'மற்றவை'},
+              req:{Buy:'வாங்க',Rent:'வாடகைக்கு','Sell my property':'என் சொத்தை விற்க','Site Visit':'நேரில் பார்வையிட'},
+              enqtype:{'Residential Plot':'குடியிருப்பு மனை',House:'வீடு',Apartment:'அடுக்குமாடி குடியிருப்பு',Villa:'வில்லா','Agricultural Land':'விவசாய நிலம்','Commercial Property':'வணிக சொத்து','Industrial Property':'தொழிற்சாலை சொத்து',Other:'மற்றவை'}
+            };
+            function apply(){const ta=document.documentElement.lang==='ta';document.querySelectorAll('[data-i18n]').forEach(el=>{const k=el.dataset.i18n;if(ta&&TA[k])el.textContent=TA[k];else if(!ta&&EN[k])el.textContent=EN[k]});Object.entries(optionTA).forEach(([id,map])=>{const el=document.getElementById(id);if(el)[...el.options].forEach(o=>{const key=o.value;if(ta&&map[key])o.textContent=map[key];else if(!ta&&id==='purpose')o.textContent={all:'Any',Buy:'Buy',Rent:'Rent',Sell:'Sell'}[key]||o.textContent;else if(!ta&&id==='ptype')o.textContent={all:'Any property','Residential Plot':'Residential Plot',House:'House',Apartment:'Apartment',Villa:'Villa','Agricultural Land':'Agricultural Land','Commercial Property':'Commercial Property','Industrial Property':'Industrial Property',Other:'Other'}[key]||o.textContent})});const b=document.getElementById('langBtn');if(b)b.textContent=ta?'English':'தமிழ்'}
+            window.toggleLanguage=function(){document.documentElement.lang=document.documentElement.lang==='ta'?'en':'ta';apply()};
+            window.addEventListener('load',()=>{document.documentElement.lang='en';apply()});
+          })();</script>'''
+          s=s.replace('</body>',patch+'\n</body>')
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit change
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Fix Tamil language toggle"
+          git push
