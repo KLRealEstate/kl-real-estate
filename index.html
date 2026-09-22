@@ -105,9 +105,16 @@ function translateOptions(){const maps={purpose:{all:["Any","எதுவும�
 function newEnquiryId(){const d=new Date();const stamp=d.getFullYear().toString().slice(-2)+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0")+String(d.getHours()).padStart(2,"0")+String(d.getMinutes()).padStart(2,"0")+String(d.getSeconds()).padStart(2,"0");return"KL"+stamp}function extractEnquiryId(e){const m=String(e.notes||"").match(/Enquiry ID:\s*([A-Z0-9-]+)/i);return m?m[1]:""}async function loadProperties(){
  const box=document.getElementById("propertyCards");
  try{
-   const result=await db.from("properties").select("*").eq("featured",true).order("created_at",{ascending:false});
-   if(result.error) throw result.error;
-   properties=(result.data||[]).filter(p=>String(p.status||"Available").toLowerCase()!=="sold"&&String(p.status||"Available").toLowerCase()!=="rented");
+   let result=await db.from("properties").select("*").order("created_at",{ascending:false});
+   if(result.error){
+     const rpc=await db.rpc("get_featured_properties");
+     if(rpc.error) throw result.error;
+     result={data:rpc.data,error:null};
+   }
+   properties=(result.data||[]).filter(p=>{
+     const status=String(p.status||"Available").toLowerCase();
+     return status!=="sold"&&status!=="rented";
+   });
    if(!properties.length){
      box.innerHTML='<p class="meta">No properties added yet.</p>';
      return;
@@ -115,7 +122,7 @@ function newEnquiryId(){const d=new Date();const stamp=d.getFullYear().toString(
    render(properties);
  }catch(error){
    console.error("KL Real Estate property load error:",error);
-   box.innerHTML='<p class="meta" style="color:#b42318;font-weight:800;">Unable to load properties. Please refresh the page.</p>';
+   box.innerHTML='<p class="meta" style="color:#b42318;font-weight:800;">Unable to load properties: '+esc(error.message||String(error))+'</p>';
  }
 }
 function wa(p){const text=`Hello KL Real Estate,\nI am interested in this property:\n\nProperty: ${p.title||""}\nType: ${p.property_type||""}\nPurpose: ${p.purpose||""}\nLocation: ${[p.location,p.district].filter(Boolean).join(", ")}\nArea: ${formatArea(p.area,p.area_unit)}\nPrice: ${formatPrice(p.price)}\n\nPlease provide more details.`;return"https://wa.me/919965188187?text="+encodeURIComponent(text)}function render(list){const v=list||[];document.getElementById("propertyCards").innerHTML=v.map((p,i)=>`<article class="card"><div class="photo" style="background-image:url('${p.image_url||"https://images.unsplash.com/photo-"+["1600585154340-be6161a56a0c","1600607687939-ce8a6c25118c","1600566753086-00f18fb6b3ea"][i%3]+"?auto=format&fit=crop&w=900&q=80"}')"><span class="photo-label">${esc(p.property_type)}</span></div><div class="card-body"><span class="featured-badge">✓ Featured</span><div class="tag">${esc(p.property_type)} · ${esc(p.purpose)}</div><h3>${esc(p.title)}</h3><div class="meta">📍 ${esc([p.location,p.district].filter(Boolean).join(", "))}<br>📐 ${esc(formatArea(p.area,p.area_unit))}<br>📌 ${esc(p.status||"Available")}</div><div class="price">${esc(formatPrice(p.price))}</div>${p.description?`<p class="meta">${esc(p.description)}</p>`:""}<a class="btn primary" target="_blank" href="${wa(p)}">💬 Enquire on WhatsApp</a></div></article>`).join("")||'<p class="meta">No featured properties found yet. Add properties from Admin.</p>'}function searchProperties(){const purpose=document.getElementById("purpose").value,type=document.getElementById("ptype").value,loc=document.getElementById("location").value.toLowerCase().trim(),budget=document.getElementById("budget").value;const list=properties.filter(p=>(purpose==="all"||p.purpose===purpose)&&(type==="all"||p.property_type===type)&&(!loc||`${p.location||""} ${p.district||""}`.toLowerCase().includes(loc))&&(!budget||!p.price||Number(p.price)<=Number(budget)*100000));render(list);document.getElementById("searchResult").textContent=list.length+" listing(s) match your search.";document.getElementById("properties").scrollIntoView({behavior:"smooth"})}
